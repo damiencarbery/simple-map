@@ -21,6 +21,7 @@ class Simple_Map {
 	private $zoom           = 16;
 	private $breakpoint     = 480;
 	private $max_breakpoint = 640;
+	private $gmaps_key      = null;
 
 	function __construct()
 	{
@@ -55,9 +56,10 @@ class Simple_Map {
 
 	public function wp_enqueue_scripts()
 	{
+		$this->gmaps_key = apply_filters( 'simplemap_gmaps_key', $this->gmaps_key );
 		wp_register_script(
 			'google-maps-api',
-			'//maps.google.com/maps/api/js',
+			'//maps.google.com/maps/api/js' . ((isset($this->gmaps_key)) ? '?key='.$this->gmaps_key : ''),
 			false,
 			null,
 			true
@@ -74,10 +76,18 @@ class Simple_Map {
 			true
 		);
 		wp_enqueue_script( 'simplemap' );
+
+		wp_localize_script( 'simplemap', 'simplemap', array(
+			'key' => '&key='.$this->gmaps_key
+		));
+
 	}
 
 	public function shortcode( $p, $content = null )
 	{
+		if ( isset( $p['key'] ) && $p['key'] ) {
+			$this->gmaps_key = $p['key'];
+		}
 		add_action( 'wp_footer', array( &$this, 'wp_enqueue_scripts' ) );
 
 		if ( isset( $p['width'] ) && preg_match( '/^[0-9]+(%|px)$/', $p['width'] ) ) {
